@@ -28,6 +28,7 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 import { useAuth } from "../context/AuthContext";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { NotificationPanel } from "../components/NotificationPanel";
 import { RealtimeIndicator } from "../components/RealtimeIndicator";
 import {
@@ -274,9 +275,12 @@ export default function Root() {
             </span>
           </button>
           <div className="flex items-center gap-3">
-            <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-[#1a1d27] shadow-lg">
-              {user ? getInitials(user.name) : "U"}
-            </div>
+            <Avatar className="h-11 w-11 shrink-0 rounded-2xl shadow-lg">
+              <AvatarImage src={user?.profilePhotoUrl || undefined} alt={user?.name || "User"} className="object-cover" />
+              <AvatarFallback className="rounded-2xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-[#1a1d27]">
+                {user ? getInitials(user.name) : "U"}
+              </AvatarFallback>
+            </Avatar>
             <div className="min-w-0 flex-1">
               <p className="truncate text-sm font-semibold text-white">
                 {user?.name || "User"}
@@ -409,9 +413,12 @@ export default function Root() {
                   {user?.role || "User"}
                 </p>
               </div>
-              <div className="w-8 h-8 rounded-full bg-gradient-to-br from-[#B0BF00] to-[#8a9600] flex items-center justify-center text-white text-xs font-semibold flex-shrink-0 shadow-lg ring-2 ring-white cursor-pointer hover:scale-110 transition-all duration-200">
-                {user ? getInitials(user.name) : "U"}
-              </div>
+              <Avatar className="h-8 w-8 flex-shrink-0 cursor-pointer ring-2 ring-white shadow-lg transition-all duration-200 hover:scale-110">
+                <AvatarImage src={user?.profilePhotoUrl || undefined} alt={user?.name || "User"} className="object-cover" />
+                <AvatarFallback className="bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-xs font-semibold text-white">
+                  {user ? getInitials(user.name) : "U"}
+                </AvatarFallback>
+              </Avatar>
             </button>
           </div>
 
@@ -426,9 +433,12 @@ export default function Root() {
                 {/* Header with gradient */}
                 <div className="bg-gradient-to-r from-[#B0BF00] to-[#8a9600] p-4 dark:from-[#d7e25f] dark:via-[#aabf2d] dark:to-[#7f9411]">
                   <div className="flex items-center gap-3">
-                    <div className="flex h-12 w-12 items-center justify-center rounded-full bg-white/20 text-sm font-bold text-white ring-2 ring-white/30 backdrop-blur-xl dark:bg-[#07111f]/18 dark:text-[#07111f] dark:ring-white/45">
-                      {user ? getInitials(user.name) : "U"}
-                    </div>
+                    <Avatar className="h-12 w-12 ring-2 ring-white/30 dark:ring-white/45">
+                      <AvatarImage src={user?.profilePhotoUrl || undefined} alt={user?.name || "User"} className="object-cover" />
+                      <AvatarFallback className="bg-white/20 text-sm font-bold text-white backdrop-blur-xl dark:bg-[#07111f]/18 dark:text-[#07111f]">
+                        {user ? getInitials(user.name) : "U"}
+                      </AvatarFallback>
+                    </Avatar>
                     <div className="flex-1">
                       <p className="text-sm font-bold text-white dark:text-[#07111f]">
                         {user?.name || "User"}

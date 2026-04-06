@@ -81,11 +81,15 @@ create table if not exists public.users (
   department text not null default '',
   position text not null default '',
   date_joined text not null default '',
+  profile_photo_url text not null default '',
   is_blocked boolean not null default false,
   blocked_at timestamptz null,
   created_at timestamptz not null default now(),
   updated_at timestamptz not null default now()
 );
+
+alter table public.users
+add column if not exists profile_photo_url text not null default '';
 
 create index if not exists idx_users_auth_id on public.users (auth_id);
 create index if not exists idx_users_role on public.users (role);

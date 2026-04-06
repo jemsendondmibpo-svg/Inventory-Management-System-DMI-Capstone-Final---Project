@@ -19,6 +19,7 @@ interface User {
   email: string;
   name: string;
   role: UserRole;
+  profilePhotoUrl?: string;
   isBlocked?: boolean;
 }
 
@@ -58,6 +59,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       email: profile.email,
       name: profile.full_name || profile.email,
       role: profile.role as UserRole,
+      profilePhotoUrl: profile.profile_photo_url || "",
       isBlocked,
     });
     setIsAuthenticated(true);
@@ -194,6 +196,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: profile.email,
             name: profile.full_name || profile.email,
             role: actualRole,
+            profilePhotoUrl: profile.profile_photo_url || "",
             isBlocked,
           });
           setIsAuthenticated(true);
@@ -245,6 +248,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
             email: profile.email,
             name: profile.full_name || profile.email,
             role: profile.role as UserRole,
+            profilePhotoUrl: profile.profile_photo_url || "",
           });
           setIsAuthenticated(true);
           return true;

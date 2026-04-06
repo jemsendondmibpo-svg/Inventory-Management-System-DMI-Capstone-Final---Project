@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { ChangeEvent, useCallback, useEffect, useRef, useState } from "react";
 import {
   User,
   Bell,
@@ -18,10 +18,14 @@ import {
   AlertTriangle,
   PackagePlus,
   FileText,
+  Camera,
+  ImagePlus,
+  Trash2,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../../lib/supabase";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 
 const sections = [
   {
@@ -57,6 +61,7 @@ type SectionId = (typeof sections)[number]["id"];
 
 export default function SettingsPage() {
   const { user, refreshUser } = useAuth();
+  const photoInputRef = useRef<HTMLInputElement>(null);
   const [activeSection, setActiveSection] = useState<SectionId>("personal");
   const [profile, setProfile] = useState({
     name: user?.name || "Jeremy Sendon",
@@ -66,6 +71,7 @@ export default function SettingsPage() {
     department: "IT Operations",
     position: "System Administrator",
     dateJoined: "January 15, 2024",
+    profilePhotoUrl: user?.profilePhotoUrl || "",
   });
   const [companyInfo, setCompanyInfo] = useState({
     companyName: "Digital Minds BPO Services Inc.",
@@ -99,7 +105,7 @@ export default function SettingsPage() {
       const [profileResult, companyResult, notificationResult] = await Promise.all([
         supabase
           .from("users")
-          .select("full_name, email, phone, department, position, date_joined, role")
+          .select("*")
           .eq("user_id", user.id)
           .maybeSingle(),
         supabase
@@ -123,6 +129,7 @@ export default function SettingsPage() {
           department: profileResult.data.department ?? "",
           position: profileResult.data.position ?? "",
           dateJoined: profileResult.data.date_joined ?? "",
+          profilePhotoUrl: profileResult.data.profile_photo_url ?? "",
         });
       } else if (user) {
         setProfile({
@@ -133,6 +140,7 @@ export default function SettingsPage() {
           department: "",
           position: "",
           dateJoined: "",
+          profilePhotoUrl: user.profilePhotoUrl ?? "",
         });
       }
 
@@ -168,6 +176,79 @@ export default function SettingsPage() {
     }
   }, [user?.id, user?.email, user?.name, user?.role]);
 
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
+  const resizeImageToDataUrl = (file: File) =>
+    new Promise<string>((resolve, reject) => {
+      const reader = new FileReader();
+
+      reader.onload = () => {
+        const image = new Image();
+
+        image.onload = () => {
+          const maxSize = 512;
+          const scale = Math.min(maxSize / image.width, maxSize / image.height, 1);
+          const canvas = document.createElement("canvas");
+          canvas.width = Math.max(1, Math.round(image.width * scale));
+          canvas.height = Math.max(1, Math.round(image.height * scale));
+
+          const context = canvas.getContext("2d");
+          if (!context) {
+            reject(new Error("Unable to process the selected image."));
+            return;
+          }
+
+          context.drawImage(image, 0, 0, canvas.width, canvas.height);
+          resolve(canvas.toDataURL("image/jpeg", 0.82));
+        };
+
+        image.onerror = () => reject(new Error("The selected file is not a valid image."));
+        image.src = typeof reader.result === "string" ? reader.result : "";
+      };
+
+      reader.onerror = () => reject(new Error("Unable to read the selected image."));
+      reader.readAsDataURL(file);
+    });
+
+  const handlePhotoSelected = async (event: ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file) return;
+
+    if (!file.type.startsWith("image/")) {
+      toast.error("Please choose an image file.");
+      event.target.value = "";
+      return;
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error("Please upload an image smaller than 5 MB.");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await resizeImageToDataUrl(file);
+      setProfile((current) => ({ ...current, profilePhotoUrl: dataUrl }));
+      toast.success("Profile photo ready to save.");
+    } catch (error) {
+      const message =
+        error instanceof Error ? error.message : "Unable to process the selected image.";
+      toast.error(message);
+    } finally {
+      event.target.value = "";
+    }
+  };
+
+  const handleRemovePhoto = () => {
+    setProfile((current) => ({ ...current, profilePhotoUrl: "" }));
+  };
+
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -200,6 +281,7 @@ export default function SettingsPage() {
             position: profile.position,
             date_joined: profile.dateJoined,
             role: profile.role,
+            profile_photo_url: profile.profilePhotoUrl,
           },
           {
             onConflict: "auth_id",
@@ -386,14 +468,12 @@ export default function SettingsPage() {
         <aside className="space-y-4 xl:sticky xl:top-4 xl:self-start">
           <div className={shellCardClass}>
               <div className="flex items-center gap-3 border-b border-slate-200 bg-white p-4">
-              <div className="flex h-12 w-12 items-center justify-center rounded-2xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-white">
-                {(user?.name || "User")
-                  .split(" ")
-                  .map((part) => part[0])
-                  .join("")
-                  .slice(0, 2)
-                  .toUpperCase()}
-              </div>
+              <Avatar className="h-12 w-12 rounded-2xl">
+                <AvatarImage src={profile.profilePhotoUrl || user?.profilePhotoUrl || undefined} alt={user?.name || "User"} className="object-cover" />
+                <AvatarFallback className="rounded-2xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-white">
+                  {getInitials(user?.name || "User")}
+                </AvatarFallback>
+              </Avatar>
               <div className="min-w-0">
                 <p className="truncate text-sm font-semibold text-slate-900">
                   {user?.name || "User"}
@@ -471,6 +551,57 @@ export default function SettingsPage() {
               )}
 
               <div className="space-y-6 p-5 sm:p-6">
+                <div className="rounded-[26px] border border-blue-100 bg-gradient-to-br from-blue-50 via-white to-sky-50 p-5">
+                  <div className="flex flex-col gap-5 md:flex-row md:items-center md:justify-between">
+                    <div className="flex items-center gap-4">
+                      <div className="relative">
+                        <Avatar className="h-24 w-24 ring-4 ring-white shadow-lg">
+                          <AvatarImage src={profile.profilePhotoUrl || undefined} alt={profile.name || "User"} className="object-cover" />
+                          <AvatarFallback className="bg-gradient-to-br from-blue-500 to-sky-500 text-2xl font-bold text-white">
+                            {getInitials(profile.name || "User")}
+                          </AvatarFallback>
+                        </Avatar>
+                        <div className="absolute -bottom-2 -right-2 flex h-9 w-9 items-center justify-center rounded-full bg-slate-900 text-white shadow-lg">
+                          <Camera className="h-4 w-4" />
+                        </div>
+                      </div>
+                      <div className="space-y-1">
+                        <p className="text-sm font-semibold text-slate-900">Profile Photo</p>
+                        <p className="max-w-md text-xs leading-5 text-slate-500">
+                          Upload a clear square photo to personalize your account across the settings panel and dashboard header.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row">
+                      <input
+                        ref={photoInputRef}
+                        type="file"
+                        accept="image/*"
+                        onChange={handlePhotoSelected}
+                        className="hidden"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => photoInputRef.current?.click()}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-blue-200 bg-white px-4 py-3 text-sm font-semibold text-blue-700 shadow-sm transition-all duration-200 hover:border-blue-300 hover:bg-blue-50"
+                      >
+                        <ImagePlus className="h-4 w-4" />
+                        Upload Photo
+                      </button>
+                      <button
+                        type="button"
+                        onClick={handleRemovePhoto}
+                        disabled={!profile.profilePhotoUrl}
+                        className="inline-flex items-center justify-center gap-2 rounded-xl border border-slate-200 bg-white px-4 py-3 text-sm font-semibold text-slate-600 shadow-sm transition-all duration-200 hover:border-slate-300 hover:bg-slate-50 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <Trash2 className="h-4 w-4" />
+                        Remove
+                      </button>
+                    </div>
+                  </div>
+                </div>
+
                 <div className="grid grid-cols-1 gap-5 md:grid-cols-2">
                   <div className="space-y-2">
                     <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
