@@ -3,6 +3,7 @@ import { useAuth, UserRole } from "../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { useTheme } from "next-themes";
 import { Button } from "../components/ui/button";
+import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
 import {
@@ -44,6 +45,7 @@ interface SystemUser {
   email: string;
   full_name: string;
   role: UserRole;
+  profile_photo_url?: string;
   created_at: string;
   auth_id: string;
   is_blocked?: boolean;
@@ -330,6 +332,14 @@ export default function UserManagement() {
     }
   };
 
+  const getInitials = (name: string) =>
+    name
+      .split(" ")
+      .map((part) => part[0])
+      .join("")
+      .slice(0, 2)
+      .toUpperCase();
+
   // Filter and paginate
   const filtered = users.filter(
     (u) =>
@@ -606,9 +616,16 @@ export default function UserManagement() {
                     <tr key={systemUser.user_id} className={rowClass}>
                       <td className="px-6 py-4 whitespace-nowrap">
                         <div className="flex items-center gap-3">
-                          <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-white">
-                            {systemUser.full_name.charAt(0).toUpperCase()}
-                          </div>
+                          <Avatar className="h-10 w-10 rounded-xl">
+                            <AvatarImage
+                              src={systemUser.profile_photo_url || undefined}
+                              alt={systemUser.full_name}
+                              className="object-cover"
+                            />
+                            <AvatarFallback className="rounded-xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-sm font-bold text-white">
+                              {getInitials(systemUser.full_name)}
+                            </AvatarFallback>
+                          </Avatar>
                           <p className="text-sm font-semibold text-slate-900 transition-colors group-hover:text-[#7f8f00]">
                             {systemUser.full_name}
                           </p>
@@ -864,6 +881,22 @@ export default function UserManagement() {
           </DialogHeader>
           {viewTarget && (
             <div className="space-y-4 py-2">
+              <div className="flex items-center gap-3 rounded-2xl border border-slate-200 bg-slate-50 p-4">
+                <Avatar className="h-14 w-14 rounded-2xl">
+                  <AvatarImage
+                    src={viewTarget.profile_photo_url || undefined}
+                    alt={viewTarget.full_name}
+                    className="object-cover"
+                  />
+                  <AvatarFallback className="rounded-2xl bg-gradient-to-br from-[#B0BF00] to-[#8a9600] text-base font-bold text-white">
+                    {getInitials(viewTarget.full_name)}
+                  </AvatarFallback>
+                </Avatar>
+                <div className="min-w-0">
+                  <p className="truncate text-sm font-semibold text-gray-800">{viewTarget.full_name}</p>
+                  <p className="truncate text-xs text-gray-500">{viewTarget.email}</p>
+                </div>
+              </div>
               <div>
                 <p className="text-xs text-gray-500 font-medium mb-1">Full Name</p>
                 <p className="text-sm text-gray-800">{viewTarget.full_name}</p>
