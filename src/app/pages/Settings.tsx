@@ -30,6 +30,7 @@ import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
 import { supabase } from "../../lib/supabase";
 import { Avatar, AvatarFallback, AvatarImage } from "../components/ui/avatar";
+import { canManageUsers } from "../lib/access";
 
 const sections = [
   {
@@ -451,6 +452,13 @@ export default function SettingsPage() {
   const labelChipClass =
     "inline-flex items-center gap-2 rounded-full border border-[#B0BF00]/20 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f8f00]";
   const passwordInputClass = `${fieldClass} pr-12`;
+  const userCanManageRoles = user ? canManageUsers(user.role) : false;
+  const roleDescription = userCanManageRoles
+    ? "Your role controls full user-administration access, so changes should be made carefully."
+    : "Your role is assigned by an administrator to keep permissions and access control consistent.";
+  const roleHelperMessage = userCanManageRoles
+    ? "You can update other users' roles in User Management, but your own access level should still follow company approval."
+    : "If your responsibilities change, ask an administrator to update your access in User Management.";
 
   const renderSectionHeader = (
     title: string,
@@ -737,7 +745,7 @@ export default function SettingsPage() {
                         <div>
                           <p className="text-sm font-semibold text-slate-800 dark:text-slate-100">{profile.role}</p>
                           <p className="mt-1 text-xs text-slate-500 dark:text-slate-400">
-                            Your role is managed centrally for security and access control.
+                            {roleDescription}
                           </p>
                         </div>
                         <div className="inline-flex w-fit rounded-lg bg-blue-100 px-3 py-1 text-xs font-semibold text-blue-700 dark:bg-[#1f3650] dark:text-slate-100">
@@ -747,7 +755,7 @@ export default function SettingsPage() {
                       <div className="mt-3 flex items-start gap-2 rounded-xl border border-blue-100 bg-white/70 p-3 dark:border-[#314865] dark:bg-[#0d1a2b]">
                         <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-[#d7e25f]" />
                         <p className="text-xs leading-5 text-blue-700 dark:text-slate-200">
-                          Role changes must be handled by the administrator through User Management.
+                          {roleHelperMessage}
                         </p>
                       </div>
                     </div>
@@ -883,11 +891,11 @@ export default function SettingsPage() {
                         </div>
                       </div>
 
-                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
-                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 dark:border-amber-400/25 dark:bg-amber-500/10">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700 dark:text-amber-200">
                           Password Tips
                         </p>
-                        <p className="mt-2 text-xs leading-5 text-amber-800">
+                        <p className="mt-2 text-xs leading-5 text-amber-800 dark:text-amber-100/90">
                           Use a unique password with a mix of uppercase letters, lowercase letters, numbers, and symbols.
                         </p>
                       </div>
