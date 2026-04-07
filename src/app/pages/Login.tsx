@@ -6,7 +6,19 @@ import { Label } from "../components/ui/label";
 import { toast } from "sonner";
 import { useAuth, UserRole, LoginFailureReason } from "../context/AuthContext";
 import { supabase } from "../../lib/supabase";
-import { Mail, Lock, ArrowRight, Shield, Zap, CheckCircle2, Users, UserCog, Briefcase } from "lucide-react";
+import {
+  Mail,
+  Lock,
+  ArrowRight,
+  Shield,
+  Zap,
+  CheckCircle2,
+  Users,
+  UserCog,
+  Briefcase,
+  Eye,
+  EyeOff,
+} from "lucide-react";
 import { useTheme } from "next-themes";
 
 const LOGO_BASE64 =
@@ -23,6 +35,7 @@ export default function Login() {
   const [isLoading, setIsLoading] = useState(false);
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   useEffect(() => {
     setTheme("light");
@@ -223,7 +236,7 @@ export default function Login() {
                   <Lock className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400 group-focus-within:text-[#7f8f00] transition-colors" />
                   <Input
                     id="password"
-                    type="password"
+                    type={showPassword ? "text" : "password"}
                     placeholder="Enter your password"
                     value={formData.password}
                     onChange={(e) =>
@@ -234,8 +247,20 @@ export default function Login() {
                     }
                     required
                     disabled={isLoading}
-                    className="h-12 pl-11 rounded-xl border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15 transition-all duration-200"
+                    className="h-12 rounded-xl border-slate-200 bg-white pl-11 pr-12 text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15"
                   />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((prev) => !prev)}
+                    className="absolute right-0 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-slate-400 transition-colors hover:text-[#7f8f00]"
+                    aria-label={showPassword ? "Hide password" : "Show password"}
+                  >
+                    {showPassword ? (
+                      <EyeOff className="h-5 w-5" />
+                    ) : (
+                      <Eye className="h-5 w-5" />
+                    )}
+                  </button>
                 </div>
               </div>
 
@@ -361,6 +386,5 @@ export default function Login() {
     </div>
   );
 }
-
 
 

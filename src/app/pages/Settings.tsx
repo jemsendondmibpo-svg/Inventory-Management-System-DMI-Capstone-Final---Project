@@ -21,6 +21,10 @@ import {
   Camera,
   ImagePlus,
   Trash2,
+  Eye,
+  EyeOff,
+  LockKeyhole,
+  BadgeCheck,
 } from "lucide-react";
 import { toast } from "sonner";
 import { useAuth } from "../context/AuthContext";
@@ -95,8 +99,19 @@ export default function SettingsPage() {
     weeklyReport: true,
     emailAlerts: true,
   });
+  const [passwordForm, setPasswordForm] = useState({
+    currentPassword: "",
+    newPassword: "",
+    confirmPassword: "",
+  });
+  const [showPasswords, setShowPasswords] = useState({
+    current: false,
+    next: false,
+    confirm: false,
+  });
   const [saved, setSaved] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const loadSettings = useCallback(async () => {
     if (!user?.id) return;
@@ -249,6 +264,72 @@ export default function SettingsPage() {
     setProfile((current) => ({ ...current, profilePhotoUrl: "" }));
   };
 
+  const handlePasswordUpdate = async () => {
+    if (!user?.email) {
+      toast.error("Please sign in again before updating your password.");
+      return;
+    }
+
+    const currentPassword = passwordForm.currentPassword.trim();
+    const newPassword = passwordForm.newPassword.trim();
+    const confirmPassword = passwordForm.confirmPassword.trim();
+
+    if (!currentPassword || !newPassword || !confirmPassword) {
+      toast.error("Please complete all password fields.");
+      return;
+    }
+
+    if (newPassword.length < 8) {
+      toast.error("Your new password must be at least 8 characters long.");
+      return;
+    }
+
+    if (newPassword !== confirmPassword) {
+      toast.error("New password and confirmation do not match.");
+      return;
+    }
+
+    if (currentPassword === newPassword) {
+      toast.error("Choose a new password that is different from your current one.");
+      return;
+    }
+
+    try {
+      setIsUpdatingPassword(true);
+
+      const { error: reauthError } = await supabase.auth.signInWithPassword({
+        email: user.email,
+        password: currentPassword,
+      });
+
+      if (reauthError) {
+        throw new Error("Your current password is incorrect.");
+      }
+
+      const { error: updatePasswordError } = await supabase.auth.updateUser({
+        password: newPassword,
+      });
+
+      if (updatePasswordError) {
+        throw updatePasswordError;
+      }
+
+      setPasswordForm({
+        currentPassword: "",
+        newPassword: "",
+        confirmPassword: "",
+      });
+      toast.success("Password updated successfully.");
+    } catch (error) {
+      console.error("Failed to update password:", error);
+      const message =
+        error instanceof Error ? error.message : "Unable to update password. Please try again.";
+      toast.error(message);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
+  };
+
   useEffect(() => {
     loadSettings();
   }, [loadSettings]);
@@ -369,6 +450,7 @@ export default function SettingsPage() {
     "overflow-hidden rounded-[28px] border border-[#B0BF00]/15 bg-white shadow-[0_24px_60px_rgba(15,23,42,0.08)] transition-all duration-300 hover:shadow-[0_26px_70px_rgba(15,23,42,0.12)]";
   const labelChipClass =
     "inline-flex items-center gap-2 rounded-full border border-[#B0BF00]/20 bg-slate-50 px-3 py-1 text-[11px] font-semibold uppercase tracking-[0.2em] text-[#7f8f00]";
+  const passwordInputClass = `${fieldClass} pr-12`;
 
   const renderSectionHeader = (
     title: string,
@@ -666,6 +748,220 @@ export default function SettingsPage() {
                         <Info className="mt-0.5 h-4 w-4 shrink-0 text-blue-500 dark:text-[#d7e25f]" />
                         <p className="text-xs leading-5 text-blue-700 dark:text-slate-200">
                           Role changes must be handled by the administrator through User Management.
+                        </p>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+
+                <div className="grid grid-cols-1 gap-5 xl:grid-cols-[minmax(0,1.2fr)_minmax(0,0.8fr)]">
+                  <div className="rounded-[26px] border border-slate-200 bg-slate-50/70 p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-slate-900 text-white shadow-lg">
+                        <LockKeyhole className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">Change Password</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Re-enter your current password, then choose a stronger one for your account.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <LockKeyhole className="h-3.5 w-3.5 text-slate-500" />
+                          Current Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            className={passwordInputClass}
+                            type={showPasswords.current ? "text" : "password"}
+                            value={passwordForm.currentPassword}
+                            onChange={(e) =>
+                              setPasswordForm((prev) => ({
+                                ...prev,
+                                currentPassword: e.target.value,
+                              }))
+                            }
+                            placeholder="Enter your current password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPasswords((prev) => ({
+                                ...prev,
+                                current: !prev.current,
+                              }))
+                            }
+                            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition-colors hover:text-slate-600"
+                            aria-label={showPasswords.current ? "Hide current password" : "Show current password"}
+                          >
+                            {showPasswords.current ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <LockKeyhole className="h-3.5 w-3.5 text-slate-500" />
+                          New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            className={passwordInputClass}
+                            type={showPasswords.next ? "text" : "password"}
+                            value={passwordForm.newPassword}
+                            onChange={(e) =>
+                              setPasswordForm((prev) => ({
+                                ...prev,
+                                newPassword: e.target.value,
+                              }))
+                            }
+                            placeholder="Use at least 8 characters"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPasswords((prev) => ({
+                                ...prev,
+                                next: !prev.next,
+                              }))
+                            }
+                            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition-colors hover:text-slate-600"
+                            aria-label={showPasswords.next ? "Hide new password" : "Show new password"}
+                          >
+                            {showPasswords.next ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-1.5 text-xs font-semibold uppercase tracking-wide text-slate-600">
+                          <BadgeCheck className="h-3.5 w-3.5 text-slate-500" />
+                          Confirm New Password
+                        </label>
+                        <div className="relative">
+                          <input
+                            className={passwordInputClass}
+                            type={showPasswords.confirm ? "text" : "password"}
+                            value={passwordForm.confirmPassword}
+                            onChange={(e) =>
+                              setPasswordForm((prev) => ({
+                                ...prev,
+                                confirmPassword: e.target.value,
+                              }))
+                            }
+                            placeholder="Repeat your new password"
+                          />
+                          <button
+                            type="button"
+                            onClick={() =>
+                              setShowPasswords((prev) => ({
+                                ...prev,
+                                confirm: !prev.confirm,
+                              }))
+                            }
+                            className="absolute inset-y-0 right-0 flex w-12 items-center justify-center text-slate-400 transition-colors hover:text-slate-600"
+                            aria-label={showPasswords.confirm ? "Hide confirmed password" : "Show confirmed password"}
+                          >
+                            {showPasswords.confirm ? (
+                              <EyeOff className="h-4 w-4" />
+                            ) : (
+                              <Eye className="h-4 w-4" />
+                            )}
+                          </button>
+                        </div>
+                      </div>
+
+                      <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4">
+                        <p className="text-xs font-semibold uppercase tracking-wide text-amber-700">
+                          Password Tips
+                        </p>
+                        <p className="mt-2 text-xs leading-5 text-amber-800">
+                          Use a unique password with a mix of uppercase letters, lowercase letters, numbers, and symbols.
+                        </p>
+                      </div>
+
+                      <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                        <p className="text-xs leading-5 text-slate-500">
+                          For security, your current password is required before the new one can be saved.
+                        </p>
+                        <button
+                          type="button"
+                          onClick={handlePasswordUpdate}
+                          disabled={isUpdatingPassword}
+                          className="inline-flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3 text-sm font-semibold text-white shadow-lg transition-all duration-300 hover:bg-slate-800 disabled:cursor-not-allowed disabled:opacity-60 sm:w-auto"
+                        >
+                          {isUpdatingPassword ? (
+                            <>
+                              <span className="h-4 w-4 animate-spin rounded-full border-2 border-white border-t-transparent" />
+                              <span>Updating...</span>
+                            </>
+                          ) : (
+                            <>
+                              <LockKeyhole className="h-4 w-4" />
+                              <span>Update Password</span>
+                            </>
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                  </div>
+
+                  <div className="rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-5">
+                    <div className="flex items-start gap-3">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg">
+                        <Shield className="h-5 w-5" />
+                      </div>
+                      <div>
+                        <p className="text-sm font-semibold text-slate-900">Account Security</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Review the key details that help keep this account protected and recoverable.
+                        </p>
+                      </div>
+                    </div>
+
+                    <div className="mt-5 space-y-3">
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Sign-in Email
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">{profile.email || "No email saved"}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Update this in your profile above so password recovery and account notices reach the right inbox.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Access Role
+                        </p>
+                        <p className="mt-2 text-sm font-semibold text-slate-900">{profile.role}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                          Permissions stay centrally managed to protect inventory, reports, and user access.
+                        </p>
+                      </div>
+
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                          Recovery Readiness
+                        </p>
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                          <BadgeCheck className="h-3.5 w-3.5" />
+                          Keep email and phone updated
+                        </div>
+                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                          Accurate contact information helps with password resets, account verification, and urgent security alerts.
                         </p>
                       </div>
                     </div>
