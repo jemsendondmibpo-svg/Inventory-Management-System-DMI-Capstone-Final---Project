@@ -640,7 +640,7 @@ export default function UserManagement() {
                             systemUser.role
                           )}`}
                         >
-                          <RoleIcon className="w-4 h-4" />
+                          {RoleIcon && <RoleIcon className="w-4 h-4" />}
                           {systemUser.role}
                         </span>
                       </td>
@@ -914,7 +914,7 @@ export default function UserManagement() {
                 >
                   {(() => {
                     const Icon = getRoleIcon(viewTarget.role);
-                    return <Icon className="w-3.5 h-3.5" />;
+                    return Icon ? <Icon className="w-3.5 h-3.5" /> : null;
                   })()}
                   {viewTarget.role}
                 </span>
