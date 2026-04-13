@@ -926,49 +926,49 @@ export default function SettingsPage() {
                     </div>
                   </div>
 
-                  <div className="rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-5">
+                  <div className="rounded-[26px] border border-emerald-100 bg-gradient-to-br from-emerald-50 via-white to-teal-50 p-5 dark:border-emerald-400/20 dark:from-emerald-500/10 dark:via-[#0f1d31] dark:to-teal-500/10">
                     <div className="flex items-start gap-3">
-                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg">
+                      <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-2xl bg-emerald-500 text-white shadow-lg dark:bg-emerald-400 dark:text-[#07111f]">
                         <Shield className="h-5 w-5" />
                       </div>
                       <div>
-                        <p className="text-sm font-semibold text-slate-900">Account Security</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="text-sm font-semibold text-slate-900 dark:text-white">Account Security</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
                           Review the key details that help keep this account protected and recoverable.
                         </p>
                       </div>
                     </div>
 
                     <div className="mt-5 space-y-3">
-                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-[#13243a]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">
                           Sign-in Email
                         </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">{profile.email || "No email saved"}</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{profile.email || "No email saved"}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
                           Update this in your profile above so password recovery and account notices reach the right inbox.
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-[#13243a]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">
                           Access Role
                         </p>
-                        <p className="mt-2 text-sm font-semibold text-slate-900">{profile.role}</p>
-                        <p className="mt-1 text-xs leading-5 text-slate-500">
+                        <p className="mt-2 text-sm font-semibold text-slate-900 dark:text-white">{profile.role}</p>
+                        <p className="mt-1 text-xs leading-5 text-slate-500 dark:text-slate-300">
                           Permissions stay centrally managed to protect inventory, reports, and user access.
                         </p>
                       </div>
 
-                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm">
-                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400">
+                      <div className="rounded-2xl border border-white/80 bg-white/80 p-4 shadow-sm dark:border-white/10 dark:bg-[#13243a]">
+                        <p className="text-[11px] font-semibold uppercase tracking-[0.18em] text-slate-400 dark:text-slate-400">
                           Recovery Readiness
                         </p>
-                        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700">
+                        <div className="mt-2 inline-flex items-center gap-2 rounded-full bg-emerald-100 px-3 py-1 text-xs font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-200 dark:ring-1 dark:ring-emerald-400/25">
                           <BadgeCheck className="h-3.5 w-3.5" />
                           Keep email and phone updated
                         </div>
-                        <p className="mt-2 text-xs leading-5 text-slate-500">
+                        <p className="mt-2 text-xs leading-5 text-slate-500 dark:text-slate-300">
                           Accurate contact information helps with password resets, account verification, and urgent security alerts.
                         </p>
                       </div>
