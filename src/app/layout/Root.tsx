@@ -237,10 +237,10 @@ export default function Root() {
               key={item.path}
               to={item.path}
               onClick={() => mobile && setIsSidebarOpen(false)}
-              className={`flex items-center gap-3 px-3 py-2.5 rounded-lg transition-all duration-150 ${
+              className={`flex items-center gap-3 rounded-lg border px-3 py-2.5 transition-all duration-150 ${
                 active
-                  ? "bg-[#B0BF00] text-[#1a1d27]"
-                  : "text-white/70 hover:text-white hover:bg-white/10"
+                  ? "border-[#B0BF00] bg-[#B0BF00] text-[#1a1d27]"
+                  : "border-white/10 text-white/70 hover:text-white hover:bg-white/10"
               }`}
             >
               <Icon

@@ -469,13 +469,6 @@ export default function UserManagement() {
                 </h1>
               </div>
             </div>
-            <Button
-              onClick={() => setAddModalOpen(true)}
-              className="h-11 rounded-xl bg-[#B0BF00] px-5 font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#9aaa00] hover:scale-[1.02]"
-            >
-              <Plus className="mr-2 h-4 w-4" />
-              Add User
-            </Button>
           </div>
         </div>
       </div>
@@ -564,6 +557,13 @@ export default function UserManagement() {
             >
               <Download className="w-4 h-4 mr-2" />
               Export
+            </Button>
+            <Button
+              onClick={() => setAddModalOpen(true)}
+              className="h-11 rounded-xl bg-[#B0BF00] px-5 font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#9aaa00] hover:scale-[1.02]"
+            >
+              <Plus className="mr-2 h-4 w-4" />
+              Add User
             </Button>
           </div>
         </div>
