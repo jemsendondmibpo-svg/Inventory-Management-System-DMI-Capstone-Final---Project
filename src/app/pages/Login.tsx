@@ -384,9 +384,11 @@ export default function Login() {
             >
               <div className="flex items-center gap-4">
                 <div
-                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 sm:h-14 sm:w-14 ${
-                    isDark ? "bg-[#0b0b0b] ring-[#B0BF00]/25" : "bg-white ring-[#B0BF00]/20"
-                  }`}
+                  className="flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl bg-[#ffffff] shadow-sm sm:h-14 sm:w-14"
+                  style={{
+                    backgroundColor: "#ffffff",
+                    border: "1px solid rgba(176, 191, 0, 0.55)",
+                  }}
                 >
                   <img
                     src={LOGO_ROLE}
