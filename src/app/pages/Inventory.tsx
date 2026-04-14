@@ -14,6 +14,9 @@ import {
   CircleDollarSign,
   ShieldCheck,
   PackagePlus,
+  Download,
+  FileText,
+  File,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -37,6 +40,7 @@ import {
 import { useInventory, InventoryAsset } from "../context/InventoryContext";
 import { useAuth } from "../context/AuthContext";
 import { canManageInventory } from "../lib/access";
+import { downloadCsvFile, downloadPdfTableFile, toCsvRow } from "../lib/tableExport";
 
 const CATEGORY_STYLES: Record<string, { light: string; dark: string }> = {
   "System Unit": {
@@ -115,6 +119,7 @@ export default function Inventory() {
   const [filterAssetStatus, setFilterAssetStatus] = useState("all");
   const [filterStartDate, setFilterStartDate] = useState("");
   const [filterEndDate, setFilterEndDate] = useState("");
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
   const [deleteTarget, setDeleteTarget] = useState<InventoryAsset | null>(null);
   const [viewTarget, setViewTarget] = useState<InventoryAsset | null>(null);
   const [editTarget, setEditTarget] = useState<InventoryAsset | null>(null);
@@ -383,6 +388,99 @@ export default function Inventory() {
     return isDark ? style.dark : style.light;
   };
 
+  const handleExportInventory = (format: "csv" | "pdf") => {
+    const rows = filtered.map((asset) => [
+      asset.assetName,
+      asset.sku,
+      asset.category,
+      asset.quantity,
+      `PHP ${asset.price.toLocaleString()}`,
+      asset.stockStatus,
+      asset.assetStatus,
+      `${asset.location} (${asset.locationCode})`,
+    ]);
+
+    const headers = [
+      "Asset Name",
+      "SKU",
+      "Category",
+      "Quantity",
+      "Unit Price",
+      "Stock Status",
+      "Asset Status",
+      "Location",
+    ];
+    const fileDate = new Date().toISOString().split("T")[0];
+    const generatedBy = user ? `${user.name} (${user.role})` : "System User";
+    const dateRangeLabel =
+      filterStartDate || filterEndDate
+        ? `${filterStartDate || "Beginning"} to ${filterEndDate || "Present"}`
+        : "All available records";
+
+    if (format === "csv") {
+      const csvRows = [toCsvRow(headers), ...rows.map((row) => toCsvRow(row))];
+      downloadCsvFile(`inventory-assets-${fileDate}.csv`, csvRows);
+      toast.success("Inventory exported as CSV.");
+      return;
+    }
+
+    try {
+      downloadPdfTableFile({
+        fileName: `inventory-assets-${fileDate}.pdf`,
+        reportLabel: "Inventory Management System",
+        title: "Inventory Assets Report",
+        generatedBy,
+        dateRangeLabel,
+        subtitle: [
+          `Module: Inventory Assets`,
+          `Filtered records: ${filtered.length}`,
+        ],
+        summary: [
+          {
+            label: "Filtered Assets",
+            value: String(filtered.length),
+            detail: "Rows currently visible in the inventory table",
+          },
+          {
+            label: "In Stock",
+            value: String(filtered.filter((asset) => asset.stockStatus === "In Stock").length),
+            detail: "Items fully available for use",
+          },
+          {
+            label: "Attention Needed",
+            value: String(filtered.filter((asset) => asset.stockStatus !== "In Stock").length),
+            detail: "Items low in stock or out of stock",
+          },
+          {
+            label: "Inventory Value",
+            value: `PHP ${filtered.reduce((sum, asset) => sum + asset.price * asset.quantity, 0).toLocaleString()}`,
+            detail: "Based on quantity and unit price",
+          },
+        ],
+        columns: [
+          { label: "Asset Name", width: 22 },
+          { label: "SKU", width: 14 },
+          { label: "Category", width: 14 },
+          { label: "Qty", width: 5, align: "right" },
+          { label: "Unit Price", width: 12, align: "right" },
+          { label: "Stock Status", width: 14 },
+          { label: "Asset Status", width: 18 },
+          { label: "Location", width: 24 },
+        ],
+        rows,
+        emptyMessage: "No inventory records matched the current filters.",
+      });
+      toast.success("Inventory PDF preview opened. Use Save as PDF to download it.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to open the PDF preview window.");
+    }
+  };
+
+  const handleGenerateExport = (format: "pdf" | "csv") => {
+    setShowFormatDialog(false);
+    handleExportInventory(format);
+  };
+
   const categories = Array.from(
     new Set(
       [
@@ -498,16 +596,24 @@ export default function Inventory() {
             </div>
             
             {/* Filter Button */}
-            <button
-              onClick={() => setFilterOpen((v) => !v)}
-              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
-            >
-              <Filter className="h-4 w-4" />
+              <button
+                onClick={() => setFilterOpen((v) => !v)}
+                className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+              >
+                <Filter className="h-4 w-4" />
               Filter
                 {(filterCategory !== "all" || filterStockStatus !== "all" || filterAssetStatus !== "all" || filterStartDate || filterEndDate) && (
                   <span className="ml-1 h-2 w-2 rounded-full bg-[#B0BF00]" />
                 )}
               </button>
+
+            <button
+              onClick={() => setShowFormatDialog(true)}
+              className="inline-flex items-center justify-center gap-2 rounded-2xl border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-600 shadow-sm transition-colors hover:bg-slate-50"
+            >
+              <Download className="h-4 w-4" />
+              Export
+            </button>
 
             {/* Add Asset Button */}
             {canEditInventory && (
@@ -806,6 +912,35 @@ export default function Inventory() {
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Choose Export Format</DialogTitle>
+            <DialogDescription>
+              Select the format for the inventory export.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-4 py-4">
+            <button
+              onClick={() => handleGenerateExport("pdf")}
+              className="flex-1 flex flex-col items-center gap-2 rounded-lg bg-[#B0BF00] px-6 py-4 font-medium text-white transition-colors hover:bg-[#9aaa00]"
+            >
+              <FileText className="h-8 w-8" />
+              <span className="text-sm">PDF Report</span>
+              <span className="text-xs opacity-80">Report style</span>
+            </button>
+            <button
+              onClick={() => handleGenerateExport("csv")}
+              className="flex-1 flex flex-col items-center gap-2 rounded-lg border-2 border-[#B0BF00] px-6 py-4 font-medium text-[#B0BF00] transition-colors hover:bg-[#B0BF00]/5"
+            >
+              <File className="h-8 w-8" />
+              <span className="text-sm">CSV Export</span>
+              <span className="text-xs opacity-80">Spreadsheet format</span>
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
 

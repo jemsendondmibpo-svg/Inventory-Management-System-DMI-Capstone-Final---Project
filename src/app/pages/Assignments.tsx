@@ -18,6 +18,9 @@ import {
   PackagePlus,
   Boxes,
   ArrowRight,
+  Download,
+  FileText,
+  File,
 } from "lucide-react";
 import { toast } from "sonner";
 import {
@@ -35,6 +38,7 @@ import FloorMapIT from "../components/FloorMapIT";
 import FloorMapHR from "../components/FloorMapHR";
 import { useAuth } from "../context/AuthContext";
 import { canManageAssignments } from "../lib/access";
+import { downloadCsvFile, downloadPdfTableFile, toCsvRow } from "../lib/tableExport";
 
 const ITEMS_PER_PAGE = 6;
 
@@ -51,6 +55,8 @@ export default function Assignments() {
   const [deleteTarget, setDeleteTarget] = useState<typeof assignments[0] | null>(null);
   const [activeTab, setActiveTab] = useState<"list" | "available" | "map">("list");
   const [selectedDepartment, setSelectedDepartment] = useState<"IT Department" | "HR Department">("IT Department");
+  const [showFormatDialog, setShowFormatDialog] = useState(false);
+  const [exportTarget, setExportTarget] = useState<"assignments" | "available" | null>(null);
   const canEditAssignments = user ? canManageAssignments(user.role) : false;
   const isDark = resolvedTheme === "dark";
 
@@ -195,6 +201,184 @@ export default function Assignments() {
   const itAssignments = assignments.filter((a) => a.department === "IT Department");
   const hrAssignments = assignments.filter((a) => a.department === "HR Department");
 
+  const handleExportAssignments = (table: "assignments" | "available", format: "csv" | "pdf") => {
+    const fileDate = new Date().toISOString().split("T")[0];
+    const generatedBy = user ? `${user.name} (${user.role})` : "System User";
+    const dateRangeLabel = "All available records";
+
+    if (table === "assignments") {
+      const rows = filtered.map((assignment) => [
+        assignment.assignmentId,
+        assignment.assetName,
+        assignment.assetSKU,
+        assignment.assignedTo || "Unassigned",
+        assignment.department,
+        assignment.workstation + (assignment.seatNumber ? ` (Seat ${assignment.seatNumber})` : ""),
+        assignment.floor,
+        assignment.status,
+      ]);
+      const headers = [
+        "ID",
+        "Asset",
+        "Asset SKU",
+        "Assigned To",
+        "Department",
+        "Workstation / Seat",
+        "Floor",
+        "Status",
+      ];
+
+      if (format === "csv") {
+        const csvRows = [toCsvRow(headers), ...rows.map((row) => toCsvRow(row))];
+        downloadCsvFile(`assignments-${fileDate}.csv`, csvRows);
+        toast.success("Assignments exported as CSV.");
+        return;
+      }
+
+      try {
+        downloadPdfTableFile({
+          fileName: `assignments-${fileDate}.pdf`,
+          reportLabel: "Inventory Management System",
+          title: "Asset Assignments Report",
+          generatedBy,
+          dateRangeLabel,
+          subtitle: [
+            `Module: Asset Assignments`,
+            `Filtered records: ${filtered.length}`,
+          ],
+          summary: [
+            {
+              label: "Total Assignments",
+              value: String(filtered.length),
+              detail: "Rows currently visible in the assignment table",
+            },
+            {
+              label: "Assigned",
+              value: String(filtered.filter((assignment) => assignment.status === "Assigned").length),
+              detail: "Assets actively deployed",
+            },
+            {
+              label: "Under Maintenance",
+              value: String(filtered.filter((assignment) => assignment.status === "Under Maintenance").length),
+              detail: "Assets temporarily unavailable",
+            },
+            {
+              label: "Defective",
+              value: String(filtered.filter((assignment) => assignment.status === "Defective").length),
+              detail: "Records flagged for replacement",
+            },
+          ],
+          columns: [
+            { label: "ID", width: 10 },
+            { label: "Asset", width: 22 },
+            { label: "Asset SKU", width: 13 },
+            { label: "Assigned To", width: 18 },
+            { label: "Department", width: 16 },
+            { label: "Workstation", width: 20 },
+            { label: "Floor", width: 8 },
+            { label: "Status", width: 16 },
+          ],
+          rows,
+          emptyMessage: "No assignments matched the current filters.",
+        });
+        toast.success("Assignments PDF preview opened. Use Save as PDF to download it.");
+      } catch (error) {
+        toast.error(error instanceof Error ? error.message : "Unable to open the PDF preview window.");
+      }
+      return;
+    }
+
+    const rows = assignableAssets.map((asset) => [
+      asset.assetName,
+      asset.sku,
+      asset.category,
+      asset.location,
+      asset.totalQuantity,
+      asset.assignedCount,
+      asset.remainingQuantity,
+      asset.assetStatus,
+    ]);
+    const headers = [
+      "Asset",
+      "SKU",
+      "Category",
+      "Location",
+      "Total Qty",
+      "Assigned",
+      "Remaining",
+      "Status",
+    ];
+
+    if (format === "csv") {
+      const csvRows = [toCsvRow(headers), ...rows.map((row) => toCsvRow(row))];
+      downloadCsvFile(`assignable-assets-${fileDate}.csv`, csvRows);
+      toast.success("Assignable assets exported as CSV.");
+      return;
+    }
+
+    try {
+      downloadPdfTableFile({
+        fileName: `assignable-assets-${fileDate}.pdf`,
+        reportLabel: "Inventory Management System",
+        title: "Assignable Assets Report",
+        generatedBy,
+        dateRangeLabel,
+        subtitle: [
+          `Module: Assignable Assets`,
+          `Filtered records: ${assignableAssets.length}`,
+        ],
+        summary: [
+          {
+            label: "Assignable Assets",
+            value: String(assignableAssets.length),
+            detail: "Rows currently visible in the available assets table",
+          },
+          {
+            label: "Total Quantity",
+            value: String(assignableAssets.reduce((sum, asset) => sum + asset.totalQuantity, 0)),
+            detail: "Units available across all listed assets",
+          },
+          {
+            label: "Assigned Units",
+            value: String(assignableAssets.reduce((sum, asset) => sum + asset.assignedCount, 0)),
+            detail: "Units already assigned",
+          },
+          {
+            label: "Remaining Units",
+            value: String(assignableAssets.reduce((sum, asset) => sum + asset.remainingQuantity, 0)),
+            detail: "Units still available",
+          },
+        ],
+        columns: [
+          { label: "Asset", width: 22 },
+          { label: "SKU", width: 13 },
+          { label: "Category", width: 14 },
+          { label: "Location", width: 20 },
+          { label: "Total Qty", width: 8, align: "right" },
+          { label: "Assigned", width: 8, align: "right" },
+          { label: "Remaining", width: 9, align: "right" },
+          { label: "Status", width: 16 },
+        ],
+        rows,
+        emptyMessage: "No assignable assets matched the current filters.",
+      });
+      toast.success("Assignable assets PDF preview opened. Use Save as PDF to download it.");
+    } catch (error) {
+      toast.error(error instanceof Error ? error.message : "Unable to open the PDF preview window.");
+    }
+  };
+
+  const openExportDialog = (table: "assignments" | "available") => {
+    setExportTarget(table);
+    setShowFormatDialog(true);
+  };
+
+  const handleGenerateExport = (format: "pdf" | "csv") => {
+    if (!exportTarget) return;
+    setShowFormatDialog(false);
+    handleExportAssignments(exportTarget, format);
+  };
+
   return (
     <div className="space-y-5 md:space-y-6">
       <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-5">
@@ -307,6 +491,14 @@ export default function Assignments() {
                   <option value="Under Maintenance">Under Maintenance</option>
                   <option value="Defective">Defective</option>
                 </select>
+
+                <button
+                  onClick={() => openExportDialog("assignments")}
+                  className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                </button>
 
                 {canEditAssignments && (
                   <button
@@ -481,6 +673,14 @@ export default function Assignments() {
                     className={`w-full bg-transparent text-sm outline-none ${isDark ? "text-slate-100 placeholder:text-slate-500" : "text-slate-700 placeholder:text-slate-400"}`}
                   />
                 </div>
+
+                <button
+                  onClick={() => openExportDialog("available")}
+                  className={`inline-flex items-center justify-center gap-2 rounded-2xl border px-4 py-2.5 text-sm font-semibold shadow-sm transition-colors ${isDark ? "border-slate-700 bg-slate-800 text-slate-200 hover:bg-slate-700" : "border-slate-200 bg-white text-slate-600 hover:bg-slate-50"}`}
+                >
+                  <Download className="h-4 w-4" />
+                  Export
+                </button>
 
                 {canEditAssignments && (
                   <button
@@ -724,6 +924,35 @@ export default function Assignments() {
               Delete
             </Button>
           </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={showFormatDialog} onOpenChange={setShowFormatDialog}>
+        <DialogContent className="sm:max-w-md rounded-xl">
+          <DialogHeader>
+            <DialogTitle>Choose Export Format</DialogTitle>
+            <DialogDescription>
+              Select the format for the {exportTarget === "available" ? "assignable assets" : "assignment list"} export.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="flex items-center justify-center gap-4 py-4">
+            <button
+              onClick={() => handleGenerateExport("pdf")}
+              className="flex-1 flex flex-col items-center gap-2 rounded-lg bg-[#B0BF00] px-6 py-4 font-medium text-white transition-colors hover:bg-[#9aaa00]"
+            >
+              <FileText className="h-8 w-8" />
+              <span className="text-sm">PDF Report</span>
+              <span className="text-xs opacity-80">Report style</span>
+            </button>
+            <button
+              onClick={() => handleGenerateExport("csv")}
+              className="flex-1 flex flex-col items-center gap-2 rounded-lg border-2 border-[#B0BF00] px-6 py-4 font-medium text-[#B0BF00] transition-colors hover:bg-[#B0BF00]/5"
+            >
+              <File className="h-8 w-8" />
+              <span className="text-sm">CSV Export</span>
+              <span className="text-xs opacity-80">Spreadsheet format</span>
+            </button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
