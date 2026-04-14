@@ -23,8 +23,12 @@ import {
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
-const LOGO_BASE64 =
+const LOGO_DARK =
   "https://cdn.digitalmindsbpo.com/storage/2022/02/Digital-Minds-BPO-Footer-Logo-768x142.png";
+const LOGO_LIGHT =
+  "https://cdn.digitalmindsbpo.com/storage/2021/11/cropped-Digital_Minds_Logo_Original.png";
+const LOGO_ROLE =
+  "https://digitalmindsbpo.com/storage/2018/11/cropped-dm-favicon.png";
 
 export default function Login() {
   const navigate = useNavigate();
@@ -209,7 +213,7 @@ export default function Login() {
           <div className="mb-5 inline-flex items-center justify-center group sm:mb-8">
             <div className="relative flex items-center justify-center">
               <img
-                src={LOGO_BASE64}
+                src={isDark ? LOGO_DARK : LOGO_LIGHT}
                 alt="Digital Minds BPO Services Inc."
                 className="relative z-10 h-24 w-auto max-w-[260px] object-contain drop-shadow-md transition-all duration-500 group-hover:scale-105 sm:h-32 sm:max-w-[320px] md:h-40 md:max-w-[380px] lg:h-44 lg:max-w-[440px]"
               />
@@ -385,9 +389,9 @@ export default function Login() {
                   }`}
                 >
                   <img
-                    src={LOGO_BASE64}
+                    src={LOGO_ROLE}
                     alt="Digital Minds logo"
-                    className="h-7 w-auto object-contain sm:h-8"
+                    className="h-7 w-7 object-contain sm:h-8 sm:w-8"
                   />
                 </div>
                 <div className="min-w-0 text-left">
