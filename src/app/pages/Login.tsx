@@ -1,5 +1,5 @@
-﻿import { useEffect, useState } from "react";
-import { useNavigate, Link } from "react-router";
+﻿import { useState } from "react";
+import { useNavigate } from "react-router";
 import { Button } from "../components/ui/button";
 import { Input } from "../components/ui/input";
 import { Label } from "../components/ui/label";
@@ -18,16 +18,18 @@ import {
   Briefcase,
   Eye,
   EyeOff,
+  Moon,
+  Sun,
 } from "lucide-react";
 import { useTheme } from "next-themes";
 
 const LOGO_BASE64 =
-  "https://media.designrush.com/agencies/293509/Digital-Minds.png";
+  "https://cdn.digitalmindsbpo.com/storage/2022/02/Digital-Minds-BPO-Footer-Logo-768x142.png";
 
 export default function Login() {
   const navigate = useNavigate();
   const { login } = useAuth();
-  const { setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
   const [formData, setFormData] = useState({
     email: "",
     password: "",
@@ -36,10 +38,8 @@ export default function Login() {
   const [showRoleSelection, setShowRoleSelection] = useState(false);
   const [selectedRole, setSelectedRole] = useState<UserRole | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-
-  useEffect(() => {
-    setTheme("light");
-  }, [setTheme]);
+  const isDark = resolvedTheme === "dark";
+  const toggleTheme = () => setTheme(isDark ? "light" : "dark");
 
   const getLoginMessage = (reason: LoginFailureReason) => {
     switch (reason) {
@@ -152,44 +152,86 @@ export default function Login() {
   ];
 
   return (
-    <div className="min-h-screen relative overflow-hidden flex items-center justify-center p-4 bg-gradient-to-br from-white via-slate-50 to-amber-50">
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_20%_80%,rgba(176,191,0,0.08)_0%,transparent_45%)]" />
-      <div className="absolute inset-0 bg-[radial-gradient(circle_at_80%_20%,rgba(31,79,140,0.08)_0%,transparent_45%)]" />
+    <div
+      className={`relative flex min-h-screen items-center justify-center overflow-hidden px-3 py-6 sm:px-4 ${
+        isDark
+          ? "bg-gradient-to-br from-[#050505] via-[#0a0a0a] to-[#111111]"
+          : "bg-gradient-to-br from-white via-slate-50 to-amber-50"
+      }`}
+    >
+      <div
+        className={`absolute inset-0 ${
+          isDark
+            ? "bg-[radial-gradient(circle_at_20%_80%,rgba(176,191,0,0.16)_0%,transparent_45%)]"
+            : "bg-[radial-gradient(circle_at_20%_80%,rgba(176,191,0,0.08)_0%,transparent_45%)]"
+        }`}
+      />
+      <div
+        className={`absolute inset-0 ${
+          isDark
+            ? "bg-[radial-gradient(circle_at_80%_20%,rgba(255,255,255,0.05)_0%,transparent_45%)]"
+            : "bg-[radial-gradient(circle_at_80%_20%,rgba(31,79,140,0.08)_0%,transparent_45%)]"
+        }`}
+      />
       <div className="absolute inset-0 overflow-hidden pointer-events-none">
-        <div className="absolute top-1/4 left-1/4 w-80 h-80 bg-[#B0BF00]/10 rounded-full blur-[120px] animate-pulse" style={{ animationDuration: '5s' }} />
-        <div className="absolute bottom-1/4 right-1/4 w-[420px] h-[420px] bg-sky-200/40 rounded-full blur-[140px] animate-pulse" style={{ animationDuration: '7s', animationDelay: '1s' }} />
+        <div
+          className={`absolute top-1/4 left-1/4 w-80 h-80 rounded-full blur-[120px] animate-pulse ${
+            isDark ? "bg-[#B0BF00]/8" : "bg-[#B0BF00]/10"
+          }`}
+          style={{ animationDuration: "5s" }}
+        />
+        <div
+          className={`absolute bottom-1/4 right-1/4 w-[420px] h-[420px] rounded-full blur-[140px] animate-pulse ${
+            isDark ? "bg-white/6" : "bg-sky-200/40"
+          }`}
+          style={{ animationDuration: "7s", animationDelay: "1s" }}
+        />
       </div>
 
-      <div className="w-full max-w-md relative z-10">
+      <button
+        type="button"
+        onClick={toggleTheme}
+        className={`absolute right-4 top-4 z-20 inline-flex items-center gap-2 rounded-full border px-4 py-2 text-xs font-semibold shadow-sm backdrop-blur transition-colors sm:right-6 sm:top-6 ${
+          isDark
+            ? "border-[#2a2a2a] bg-[#111111]/95 text-slate-100 hover:bg-[#161616]"
+            : "border-slate-200 bg-white/90 text-slate-700 hover:bg-slate-50"
+        }`}
+        aria-label={isDark ? "Switch to light mode" : "Switch to dark mode"}
+        title={isDark ? "Switch to light mode" : "Switch to dark mode"}
+      >
+        {isDark ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
+        <span className="hidden sm:inline">{isDark ? "Light" : "Dark"} Mode</span>
+      </button>
+
+      <div className="relative z-10 w-full max-w-lg space-y-6">
         {/* Logo and Company Info */}
-        <div className="text-center mb-8">
-          <div className="inline-flex items-center justify-center mb-8 group">
-            <div className="relative">
-              <div className="absolute inset-0 bg-[#B0BF00]/20 blur-2xl rounded-full group-hover:bg-[#B0BF00]/30 transition-all duration-500" />
+        <div className="text-center">
+          <div className="mb-5 inline-flex items-center justify-center group sm:mb-8">
+            <div className="relative flex items-center justify-center">
               <img
                 src={LOGO_BASE64}
                 alt="Digital Minds BPO Services Inc."
-                className="h-56 w-auto max-w-sm relative z-10 drop-shadow-2xl transition-all duration-500 group-hover:scale-105 group-hover:drop-shadow-[0_0_40px_rgba(176,191,0,0.6)]"
+                className="relative z-10 h-24 w-auto max-w-[260px] object-contain drop-shadow-md transition-all duration-500 group-hover:scale-105 sm:h-32 sm:max-w-[320px] md:h-40 md:max-w-[380px] lg:h-44 lg:max-w-[440px]"
               />
             </div>
           </div>
-          <h1 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">
+          <h1 className={`mb-3 text-3xl font-bold tracking-tight sm:text-4xl ${isDark ? "text-slate-100" : "text-slate-900"}`}>
             Welcome Back
           </h1>
-          <p className="text-base text-slate-600 mb-2">
+          <p className={`mb-2 text-base sm:text-lg ${isDark ? "text-slate-300" : "text-slate-600"}`}>
             Inventory Management System
           </p>
-          <div className="flex items-center justify-center gap-3 text-sm text-slate-500">
+          <div className={`flex flex-wrap items-center justify-center gap-x-3 gap-y-2 text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
             <span className="flex items-center gap-1">
               <CheckCircle2 className="w-4 h-4 text-[#B0BF00]" />
               Efficient
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span className="flex items-center gap-1">
               <Shield className="w-4 h-4 text-[#B0BF00]" />
               Secure
             </span>
-            <span>•</span>
+            <span className="hidden sm:inline">•</span>
             <span className="flex items-center gap-1">
               <Zap className="w-4 h-4 text-[#B0BF00]" />
               Fast
@@ -199,10 +241,19 @@ export default function Login() {
 
         {/* Login Form - Enhanced Glass-morphism */}
         {!showRoleSelection && (
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300">
-            <form onSubmit={handleSubmit} className="space-y-6">
+          <div
+            className={`rounded-[28px] border p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 sm:p-8 lg:p-10 ${
+              isDark
+                ? "border-[#B0BF00]/60 bg-[#0b0b0b] shadow-[0_24px_70px_rgba(0,0,0,0.58)]"
+                : "border-[#B0BF00]/35 bg-white/95 shadow-[0_24px_60px_rgba(15,23,42,0.1)]"
+            }`}
+          >
+            <form onSubmit={handleSubmit} className="space-y-5 sm:space-y-6">
               <div className="space-y-2">
-                <Label htmlFor="email" className="text-slate-700 font-medium text-sm">
+                <Label
+                  htmlFor="email"
+                  className={`text-sm font-medium ${isDark ? "text-slate-100" : "text-slate-700"}`}
+                >
                   Email Address
                 </Label>
                 <div className="relative group">
@@ -220,7 +271,11 @@ export default function Login() {
                     }
                     required
                     disabled={isLoading}
-                    className="h-12 pl-11 rounded-xl border-slate-200 bg-white text-slate-900 placeholder:text-slate-400 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15 transition-all duration-200"
+                    className={`h-12 rounded-2xl pl-11 transition-all duration-200 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15 ${
+                      isDark
+                        ? "border-[#2f2f2f] bg-[#171717] text-slate-100 placeholder:text-slate-500"
+                        : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
+                    }`}
                   />
                 </div>
               </div>
@@ -228,7 +283,7 @@ export default function Login() {
               <div className="space-y-2">
                 <Label
                   htmlFor="password"
-                  className="text-slate-700 font-medium text-sm"
+                  className={`text-sm font-medium ${isDark ? "text-slate-100" : "text-slate-700"}`}
                 >
                   Password
                 </Label>
@@ -247,12 +302,18 @@ export default function Login() {
                     }
                     required
                     disabled={isLoading}
-                    className="h-12 rounded-xl border-slate-200 bg-white pl-11 pr-12 text-slate-900 placeholder:text-slate-400 transition-all duration-200 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15"
+                    className={`h-12 rounded-2xl pl-11 pr-12 transition-all duration-200 focus:border-[#B0BF00] focus:ring-2 focus:ring-[#B0BF00]/15 ${
+                      isDark
+                        ? "border-[#2f2f2f] bg-[#171717] text-slate-100 placeholder:text-slate-500"
+                        : "border-slate-200 bg-white text-slate-900 placeholder:text-slate-400"
+                    }`}
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword((prev) => !prev)}
-                    className="absolute right-0 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center text-slate-400 transition-colors hover:text-[#7f8f00]"
+                    className={`absolute right-0 top-1/2 flex h-12 w-12 -translate-y-1/2 items-center justify-center transition-colors hover:text-[#7f8f00] ${
+                      isDark ? "text-slate-500" : "text-slate-400"
+                    }`}
                     aria-label={showPassword ? "Hide password" : "Show password"}
                   >
                     {showPassword ? (
@@ -267,7 +328,7 @@ export default function Login() {
               <Button
                 type="submit"
                 disabled={isLoading}
-                className="w-full h-12 bg-[#B0BF00] hover:bg-[#9FAE00] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-[#B0BF00]/20 transition-all duration-300 group relative overflow-hidden"
+                className="group relative h-12 w-full overflow-hidden rounded-2xl bg-[#B0BF00] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#9FAE00] hover:shadow-xl hover:shadow-[#B0BF00]/20"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   {isLoading ? "Signing in..." : "Sign In"}
@@ -277,22 +338,24 @@ export default function Login() {
               </Button>
             </form>
 
-            <div className="mt-8 text-center space-y-4">
+            <div className="mt-6 space-y-4 text-center sm:mt-8">
               <button
                 type="button"
-                className="text-sm text-[#7f8f00] hover:text-[#5f6a00] font-medium hover:underline transition-colors"
+                className="text-sm font-medium text-[#B0BF00] transition-colors hover:text-[#d7e25f] hover:underline"
               >
                 Forgot your password?
               </button>
               <div className="relative">
                 <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-slate-200" />
+                  <div className={`w-full border-t ${isDark ? "border-[#B0BF00]/30" : "border-slate-200"}`} />
                 </div>
                 <div className="relative flex justify-center text-xs">
-                  <span className="bg-white px-4 text-slate-500">New to Digital Minds?</span>
+                  <span className={`px-4 ${isDark ? "bg-[#0b0b0b] text-slate-400" : "bg-white text-slate-500"}`}>
+                    New to Digital Minds?
+                  </span>
                 </div>
               </div>
-              <div className="text-sm text-center text-slate-500">
+              <div className={`text-center text-sm ${isDark ? "text-slate-400" : "text-slate-500"}`}>
                 <p>Contact your system administrator to create an account</p>
               </div>
             </div>
@@ -301,35 +364,80 @@ export default function Login() {
 
         {/* Role Selection */}
         {showRoleSelection && (
-          <div className="rounded-3xl border border-slate-200 bg-white/95 p-10 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300">
-            <div className="text-center mb-6">
-              <h2 className="text-2xl font-bold text-slate-900 mb-2">Select Your Role</h2>
-              <p className="text-sm text-slate-600">Choose your department to continue</p>
+          <div
+            className={`rounded-[28px] border p-5 shadow-[0_18px_55px_rgba(15,23,42,0.08)] transition-all duration-300 sm:p-8 lg:p-10 ${
+              isDark
+                ? "border-[#B0BF00]/60 bg-[#0b0b0b] shadow-[0_24px_70px_rgba(0,0,0,0.58)]"
+                : "border-[#B0BF00]/35 bg-white/95 shadow-[0_24px_60px_rgba(15,23,42,0.1)]"
+            }`}
+          >
+            <div
+              className={`mb-5 rounded-2xl border p-4 shadow-sm sm:mb-6 sm:p-5 ${
+                isDark
+                  ? "border-[#B0BF00]/30 bg-[#121212]"
+                  : "border-[#B0BF00]/20 bg-gradient-to-r from-[#f7fad8] via-white to-[#eef3c2]"
+              }`}
+            >
+              <div className="flex items-center gap-4">
+                <div
+                  className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-2xl shadow-sm ring-1 sm:h-14 sm:w-14 ${
+                    isDark ? "bg-[#0b0b0b] ring-[#B0BF00]/25" : "bg-white ring-[#B0BF00]/20"
+                  }`}
+                >
+                  <img
+                    src={LOGO_BASE64}
+                    alt="Digital Minds logo"
+                    className="h-7 w-auto object-contain sm:h-8"
+                  />
+                </div>
+                <div className="min-w-0 text-left">
+                  <p className={`text-[11px] font-semibold uppercase tracking-[0.22em] ${isDark ? "text-[#d7e25f]" : "text-[#7f8f00]"}`}>
+                    Role Verification
+                  </p>
+                  <h2 className={`mt-1 text-2xl font-bold tracking-tight ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                    Select Your Role
+                  </h2>
+                  <p className={`text-sm ${isDark ? "text-slate-400" : "text-slate-600"}`}>
+                    Choose your department to continue
+                  </p>
+                </div>
+              </div>
             </div>
-            
+
             <div className="space-y-3">
               {roles.map((role) => {
                 const Icon = role.icon;
                 return (
                   <button
                     key={role.value}
+                    type="button"
                     onClick={() => handleRoleSelection(role.value)}
-                    className={`w-full flex items-center gap-4 p-4 rounded-xl border-2 transition-all duration-300 ${
+                    className={`flex w-full items-center gap-3 rounded-2xl border-2 p-4 text-left transition-all duration-300 sm:gap-4 ${
                       selectedRole === role.value
-                        ? "bg-[#f7fad8] border-[#B0BF00] shadow-lg shadow-[#B0BF00]/10"
-                        : "bg-white border-slate-200 hover:bg-slate-50 hover:border-slate-300"
+                        ? isDark
+                          ? "border-[#B0BF00] bg-[#121212] shadow-lg shadow-black/35"
+                          : "border-[#B0BF00] bg-[#f7fad8] shadow-lg shadow-[#B0BF00]/10"
+                        : isDark
+                          ? "border-[#2f2f2f] bg-[#101010] hover:border-[#B0BF00]/50 hover:bg-[#141414]"
+                          : "border-[#B0BF00]/20 bg-white hover:border-[#B0BF00]/40 hover:bg-slate-50"
                     }`}
                   >
-                    <div className={`flex items-center justify-center w-12 h-12 rounded-lg ${
+                    <div className={`flex h-12 w-12 shrink-0 items-center justify-center rounded-xl sm:h-12 sm:w-12 ${
                       selectedRole === role.value
                         ? "bg-[#B0BF00] text-white"
-                        : "bg-[#f8fafc] text-[#7f8f00]"
+                        : isDark
+                          ? "bg-[#151515] text-[#B0BF00]"
+                          : "bg-[#f8fafc] text-[#7f8f00]"
                     }`}>
                       <Icon className="w-6 h-6" />
                     </div>
-                    <div className="flex-1 text-left">
-                      <h3 className="text-base font-semibold text-slate-900">{role.value}</h3>
-                      <p className="text-xs text-slate-500">{role.description}</p>
+                    <div className="min-w-0 flex-1 text-left">
+                      <h3 className={`text-base font-semibold ${isDark ? "text-slate-100" : "text-slate-900"}`}>
+                        {role.value}
+                      </h3>
+                      <p className={`text-xs ${isDark ? "text-slate-400" : "text-slate-500"}`}>
+                        {role.description}
+                      </p>
                     </div>
                     {selectedRole === role.value && (
                       <CheckCircle2 className="w-5 h-5 text-[#B0BF00]" />
@@ -339,11 +447,15 @@ export default function Login() {
               })}
             </div>
 
-            <div className="mt-8 flex gap-3">
+            <div className="mt-6 flex flex-col gap-3 sm:mt-8 sm:flex-row">
               <Button
                 type="button"
                 onClick={handleBackToLogin}
-                className="flex-1 h-12 bg-white hover:bg-slate-50 text-slate-700 font-semibold rounded-xl border border-slate-200 transition-all duration-300"
+                className={`h-12 flex-1 rounded-2xl border font-semibold transition-all duration-300 ${
+                  isDark
+                    ? "border-[#B0BF00]/40 bg-[#111111] text-slate-100 hover:bg-[#151515]"
+                    : "border-[#B0BF00]/25 bg-white text-slate-700 hover:border-[#B0BF00]/40 hover:bg-slate-50"
+                }`}
               >
                 Back
               </Button>
@@ -351,7 +463,7 @@ export default function Login() {
                 type="button"
                 onClick={handleContinue}
                 disabled={!selectedRole}
-                className="flex-1 h-12 bg-[#B0BF00] hover:bg-[#9FAE00] text-white font-semibold rounded-xl shadow-lg hover:shadow-xl hover:shadow-[#B0BF00]/20 transition-all duration-300 disabled:opacity-50 disabled:cursor-not-allowed group relative overflow-hidden"
+                className="group relative h-12 flex-1 overflow-hidden rounded-2xl bg-[#B0BF00] font-semibold text-white shadow-lg transition-all duration-300 hover:bg-[#9FAE00] hover:shadow-xl hover:shadow-[#B0BF00]/20 disabled:cursor-not-allowed disabled:opacity-50"
               >
                 <span className="relative z-10 flex items-center justify-center gap-2">
                   Continue
@@ -364,19 +476,19 @@ export default function Login() {
         )}
 
         {/* Footer */}
-        <div className="mt-10 text-center">
-          <p className="text-xs text-slate-500 mb-4">
+        <div className="text-center">
+          <p className={`mb-4 text-xs ${isDark ? "text-slate-500" : "text-slate-500"}`}>
             © 2026 Digital Minds BPO Services Inc. All rights reserved.
           </p>
-          <div className="flex items-center justify-center gap-4">
+          <div className="flex flex-wrap items-center justify-center gap-3 sm:gap-4">
             <button className="text-xs text-slate-500 hover:text-[#7f8f00] transition-colors">
               Privacy Policy
             </button>
-            <span className="text-slate-300">•</span>
+            <span className="hidden sm:inline text-slate-300">•</span>
             <button className="text-xs text-slate-500 hover:text-[#7f8f00] transition-colors">
               Terms of Service
             </button>
-            <span className="text-slate-300">•</span>
+            <span className="hidden sm:inline text-slate-300">•</span>
             <button className="text-xs text-slate-500 hover:text-[#7f8f00] transition-colors">
               Contact Support
             </button>
