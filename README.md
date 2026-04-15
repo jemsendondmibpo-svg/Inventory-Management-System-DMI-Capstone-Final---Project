@@ -65,6 +65,8 @@ npm run dev
 You’ll see a local link like:
 
 http://localhost:5173
+
+or click this link https://inventory-management-system-dmi-cap.vercel.app/
 ----------------------------------------------------------------
 ----------------------------------------------------------------
 use this credentials
