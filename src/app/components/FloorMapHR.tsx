@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { Assignment } from "../context/AssignmentsContext";
 import { useInventory } from "../context/InventoryContext";
@@ -58,31 +58,49 @@ const WORKSTATION_AREAS = {
 
 interface SeatCellProps {
   assignment: Assignment;
-  displayNumber: number;
   isDark: boolean;
   onClick?: (assignment: Assignment) => void;
 }
 
-function SeatCell({ assignment, displayNumber, isDark, onClick }: SeatCellProps) {
+function getSeatLabel(assignment: Assignment) {
+  const name = assignment.assignedTo.trim() || "Unassigned";
+  const seatLabel = assignment.seatNumber ? `Seat ${assignment.seatNumber}` : "No seat";
+  return { name, seatLabel };
+}
+
+function SeatCell({ assignment, isDark, onClick }: SeatCellProps) {
   const [hovered, setHovered] = useState(false);
   const status = getStatusFromAssignment(assignment);
+  const { name, seatLabel } = getSeatLabel(assignment);
 
   return (
     <div className="relative">
       <div
-        className={`w-14 h-14 border rounded-lg flex items-center justify-center cursor-pointer transition-all hover:scale-105 hover:shadow-lg select-none ${SEAT_COLORS[status]}`}
-        style={{ fontSize: "11px", fontWeight: 700 }}
+        className={`flex h-12 w-12 cursor-pointer select-none items-center justify-center rounded-lg border px-1 text-center transition-all hover:scale-105 hover:shadow-lg sm:h-16 sm:w-16 ${SEAT_COLORS[status]}`}
+        style={{ fontSize: "10px", fontWeight: 700, lineHeight: 1.05 }}
         onClick={() => onClick?.(assignment)}
         onMouseEnter={() => setHovered(true)}
         onMouseLeave={() => setHovered(false)}
-        title={`#${displayNumber} - ${assignment.assignedTo}`}
+        title={`${name} - ${seatLabel}`}
       >
-        {displayNumber}
+        <div className="flex flex-col items-center">
+          <span
+            className="max-w-full overflow-hidden text-[8px] font-semibold leading-tight sm:text-[9px]"
+            style={{
+              display: "-webkit-box",
+              WebkitBoxOrient: "vertical",
+              WebkitLineClamp: 2,
+            }}
+          >
+            {name}
+          </span>
+          <span className="mt-0.5 text-[9px] font-bold leading-tight sm:text-[10px]">{seatLabel}</span>
+        </div>
       </div>
 
       {hovered && (
         <div
-          className={`absolute bottom-full left-1/2 z-50 mb-2 min-w-[180px] -translate-x-1/2 rounded-lg px-3 py-2.5 shadow-xl pointer-events-none ${
+          className={`pointer-events-none absolute bottom-full left-1/2 z-50 mb-2 min-w-[160px] -translate-x-1/2 rounded-lg px-3 py-2.5 shadow-xl sm:min-w-[180px] ${
             isDark ? "bg-slate-800 text-slate-100" : "bg-gray-900 text-white"
           }`}
         >
@@ -125,6 +143,15 @@ export default function FloorMapHR({ assignments, onSeatClick }: Props) {
   const { inventory } = useInventory();
   const isDark = resolvedTheme === "dark";
 
+  useEffect(() => {
+    if (
+      selectedInfo &&
+      !assignments.some((assignment) => assignment.assignmentId === selectedInfo.assignmentId)
+    ) {
+      setSelectedInfo(null);
+    }
+  }, [assignments, selectedInfo]);
+
   const getWorkstationAssignments = (areaKey: keyof typeof WORKSTATION_AREAS) => {
     const area = WORKSTATION_AREAS[areaKey];
 
@@ -144,20 +171,7 @@ export default function FloorMapHR({ assignments, onSeatClick }: Props) {
 
     return sorted.map((assignment, index) => ({
       assignment,
-      displayNumber: index + 1,
     }));
-  };
-
-  const getDisplayNumberForAssignment = (assignment: Assignment) => {
-    for (const areaKey of Object.keys(WORKSTATION_AREAS) as Array<keyof typeof WORKSTATION_AREAS>) {
-      const found = getWorkstationAssignments(areaKey).find(
-        (item) => item.assignment.assignmentId === assignment.assignmentId
-      );
-
-      if (found) return found.displayNumber;
-    }
-
-    return 0;
   };
 
   const handleClick = (assignment: Assignment) => {
@@ -193,59 +207,70 @@ export default function FloorMapHR({ assignments, onSeatClick }: Props) {
       </div>
 
       <div className={`overflow-x-auto rounded-xl border p-5 ${isDark ? "border-slate-800 bg-slate-950" : "border-gray-200 bg-[#f4f6f8]"}`}>
-        <div className="min-w-[980px] space-y-6">
-          <div className="grid grid-cols-2 gap-6">
-            {(["Front Desk", "Conference Room"] as const).map((areaKey) => (
-              <div key={areaKey} className={`rounded-xl border p-4 shadow-sm ${isDark ? "border-slate-700 bg-slate-900" : "border-gray-200 bg-white"}`}>
-                <div className={`${WORKSTATION_AREAS[areaKey].color} mb-3 rounded-lg px-3 py-2 text-center text-xs font-bold text-white`}>
-                  {WORKSTATION_AREAS[areaKey].label}
-                </div>
-                <div className="flex min-h-[120px] flex-wrap gap-2">
+        {assignments.length === 0 ? (
+          <div className="flex min-h-[280px] items-center justify-center">
+            <div className={`max-w-md rounded-2xl border px-6 py-8 text-center shadow-sm ${isDark ? "border-slate-700 bg-slate-900" : "border-gray-200 bg-white"}`}>
+              <p className={`text-sm font-semibold ${isDark ? "text-slate-100" : "text-slate-800"}`}>
+                No matching assignments found
+              </p>
+              <p className={`mt-2 text-xs leading-6 ${isDark ? "text-slate-400" : "text-gray-500"}`}>
+                Try a different search term to show seats on this floor map.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <div className="min-w-[980px] space-y-6">
+            <div className="grid grid-cols-2 gap-6">
+              {(["Front Desk", "Conference Room"] as const).map((areaKey) => (
+                <div key={areaKey} className={`rounded-xl border p-4 shadow-sm ${isDark ? "border-slate-700 bg-slate-900" : "border-gray-200 bg-white"}`}>
+                  <div className={`${WORKSTATION_AREAS[areaKey].color} mb-3 rounded-lg px-3 py-2 text-center text-xs font-bold text-white`}>
+                    {WORKSTATION_AREAS[areaKey].label}
+                  </div>
+                  <div className="flex min-h-[120px] flex-wrap gap-2">
                   {getWorkstationAssignments(areaKey).map((item) => (
                     <SeatCell
                       key={item.assignment.assignmentId}
                       assignment={item.assignment}
-                      displayNumber={item.displayNumber}
                       isDark={isDark}
                       onClick={handleClick}
                     />
-                  ))}
+                    ))}
+                  </div>
+                  <div className={`mt-3 border-t pt-3 ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+                    <p className={`text-[10px] ${isDark ? "text-slate-500" : "text-gray-400"}`}>
+                      {getWorkstationAssignments(areaKey).length} assignments
+                    </p>
+                  </div>
                 </div>
-                <div className={`mt-3 border-t pt-3 ${isDark ? "border-slate-700" : "border-gray-100"}`}>
-                  <p className={`text-[10px] ${isDark ? "text-slate-500" : "text-gray-400"}`}>
-                    {getWorkstationAssignments(areaKey).length} assignments
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
 
-          <div className="grid grid-cols-3 gap-6">
-            {(["HR Room", "IT Room", "Production Area"] as const).map((areaKey) => (
-              <div key={areaKey} className={`rounded-xl border p-4 shadow-sm ${isDark ? "border-slate-700 bg-slate-900" : "border-gray-200 bg-white"}`}>
-                <div className={`${WORKSTATION_AREAS[areaKey].color} mb-3 rounded-lg px-3 py-2 text-center text-xs font-bold text-white`}>
-                  {WORKSTATION_AREAS[areaKey].label}
-                </div>
-                <div className="flex min-h-[120px] flex-wrap gap-2">
+            <div className="grid grid-cols-3 gap-6">
+              {(["HR Room", "IT Room", "Production Area"] as const).map((areaKey) => (
+                <div key={areaKey} className={`rounded-xl border p-4 shadow-sm ${isDark ? "border-slate-700 bg-slate-900" : "border-gray-200 bg-white"}`}>
+                  <div className={`${WORKSTATION_AREAS[areaKey].color} mb-3 rounded-lg px-3 py-2 text-center text-xs font-bold text-white`}>
+                    {WORKSTATION_AREAS[areaKey].label}
+                  </div>
+                  <div className="flex min-h-[120px] flex-wrap gap-2">
                   {getWorkstationAssignments(areaKey).map((item) => (
                     <SeatCell
                       key={item.assignment.assignmentId}
                       assignment={item.assignment}
-                      displayNumber={item.displayNumber}
                       isDark={isDark}
                       onClick={handleClick}
                     />
-                  ))}
+                    ))}
+                  </div>
+                  <div className={`mt-3 border-t pt-3 ${isDark ? "border-slate-700" : "border-gray-100"}`}>
+                    <p className={`text-[10px] ${isDark ? "text-slate-500" : "text-gray-400"}`}>
+                      {getWorkstationAssignments(areaKey).length} assignments
+                    </p>
+                  </div>
                 </div>
-                <div className={`mt-3 border-t pt-3 ${isDark ? "border-slate-700" : "border-gray-100"}`}>
-                  <p className={`text-[10px] ${isDark ? "text-slate-500" : "text-gray-400"}`}>
-                    {getWorkstationAssignments(areaKey).length} assignments
-                  </p>
-                </div>
-              </div>
-            ))}
+              ))}
+            </div>
           </div>
-        </div>
+        )}
       </div>
 
       {selectedInfo && (
@@ -253,8 +278,8 @@ export default function FloorMapHR({ assignments, onSeatClick }: Props) {
           <div className="flex items-start justify-between gap-4">
             <div className="flex-1">
               <div className="mb-2 flex items-center gap-2">
-                <div className={`flex h-10 w-10 items-center justify-center rounded-lg border text-sm font-bold ${SEAT_COLORS[getStatusFromAssignment(selectedInfo)]}`}>
-                  {getDisplayNumberForAssignment(selectedInfo)}
+                <div className={`flex h-10 w-10 items-center justify-center rounded-lg border text-[11px] font-bold ${SEAT_COLORS[getStatusFromAssignment(selectedInfo)]}`}>
+                  {selectedInfo.seatNumber ?? "N/A"}
                 </div>
                 <div>
                   <p className={`text-sm font-semibold ${isDark ? "text-slate-100" : "text-gray-800"}`}>

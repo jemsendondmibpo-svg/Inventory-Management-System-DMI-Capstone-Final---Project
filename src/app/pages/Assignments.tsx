@@ -49,6 +49,7 @@ export default function Assignments() {
   const { assignments, deleteAssignment } = useAssignments();
   const { inventory } = useInventory();
   const [search, setSearch] = useState("");
+  const [mapSearch, setMapSearch] = useState("");
   const [filterStatus, setFilterStatus] = useState("all");
   const [currentPage, setCurrentPage] = useState(1);
   const [viewTarget, setViewTarget] = useState<typeof assignments[0] | null>(null);
@@ -120,7 +121,7 @@ export default function Assignments() {
     .filter((asset) => {
       const q = search.toLowerCase();
       const matchesSearch =
-      asset.assetName.toLowerCase().includes(q) ||
+        asset.assetName.toLowerCase().includes(q) ||
         asset.sku.toLowerCase().includes(q) ||
         asset.category.toLowerCase().includes(q) ||
         asset.location.toLowerCase().includes(q);
@@ -200,6 +201,28 @@ export default function Assignments() {
 
   const itAssignments = assignments.filter((a) => a.department === "IT Department");
   const hrAssignments = assignments.filter((a) => a.department === "HR Department");
+  const normalizedMapSearch = mapSearch.toLowerCase().trim();
+
+  const matchesMapSearch = (assignment: typeof assignments[number]) => {
+    if (!normalizedMapSearch) return true;
+
+    return [
+      assignment.assignmentId,
+      assignment.assetName,
+      assignment.assetSKU,
+      assignment.assignedTo,
+      assignment.department,
+      assignment.workstation,
+      assignment.seatNumber ? String(assignment.seatNumber) : "",
+      assignment.floor,
+      assignment.status,
+    ].some((value) => value.toLowerCase().includes(normalizedMapSearch));
+  };
+
+  const filteredItAssignments = itAssignments.filter(matchesMapSearch);
+  const filteredHrAssignments = hrAssignments.filter(matchesMapSearch);
+  const activeMapAssignments =
+    selectedDepartment === "IT Department" ? filteredItAssignments : filteredHrAssignments;
 
   const handleExportAssignments = (table: "assignments" | "available", format: "csv" | "pdf") => {
     const fileDate = new Date().toISOString().split("T")[0];
@@ -825,34 +848,61 @@ export default function Assignments() {
                 {selectedDepartment} Floor Map - {selectedDepartment === "IT Department" ? "2nd Floor" : "3rd Floor"}
               </h3>
             </div>
-            <div className="flex items-center gap-2">
-              <select
-                value={selectedDepartment}
-                onChange={(e) => setSelectedDepartment(e.target.value as "IT Department" | "HR Department")}
-                className={`rounded-2xl border px-4 py-2.5 text-sm font-medium outline-none focus:border-[#B0BF00] shadow-sm ${isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-600"}`}
-              >
-                <option value="IT Department">IT Department</option>
-                <option value="HR Department">HR Department</option>
-              </select>
+            <div className="flex flex-col gap-2 sm:items-end">
+              <div className={`flex w-full items-center gap-2 rounded-2xl border px-3.5 py-2.5 shadow-sm sm:w-80 ${isDark ? "border-slate-700 bg-slate-800" : "border-slate-200 bg-white"}`}>
+                <Search className={`h-4 w-4 flex-shrink-0 ${isDark ? "text-slate-500" : "text-slate-400"}`} />
+                <input
+                  type="text"
+                  placeholder="Search floor map..."
+                  value={mapSearch}
+                  onChange={(e) => setMapSearch(e.target.value)}
+                  className={`w-full bg-transparent text-sm outline-none ${isDark ? "text-slate-100 placeholder:text-slate-500" : "text-slate-700 placeholder:text-slate-400"}`}
+                />
+                {mapSearch && (
+                  <button
+                    type="button"
+                    onClick={() => setMapSearch("")}
+                    className={`text-xs font-semibold ${isDark ? "text-slate-400 hover:text-slate-200" : "text-slate-500 hover:text-slate-700"}`}
+                  >
+                    Clear
+                  </button>
+                )}
+              </div>
+              <p className={`text-xs ${isDark ? "text-slate-500" : "text-slate-500"}`}>
+                {mapSearch
+                  ? `${activeMapAssignments.length} matching assignment${activeMapAssignments.length === 1 ? "" : "s"} on this floor`
+                  : `${activeMapAssignments.length} assignment${activeMapAssignments.length === 1 ? "" : "s"} visible on this floor`}
+              </p>
 
-              {canEditAssignments && (
-                <button
-                  onClick={() => navigate("/dashboard/add-assignment")}
-                  className="inline-flex items-center gap-2 rounded-2xl bg-[#B0BF00] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(176,191,0,0.28)] transition-colors hover:bg-[#9aaa00] whitespace-nowrap"
+              <div className="flex items-center gap-2">
+                <select
+                  value={selectedDepartment}
+                  onChange={(e) => setSelectedDepartment(e.target.value as "IT Department" | "HR Department")}
+                  className={`rounded-2xl border px-4 py-2.5 text-sm font-medium outline-none focus:border-[#B0BF00] shadow-sm ${isDark ? "border-slate-700 bg-slate-800 text-slate-200" : "border-slate-200 bg-white text-slate-600"}`}
                 >
-                  <PackagePlus className="h-4 w-4" />
-                  <span className="hidden sm:inline">New Assignment</span>
-                  <span className="sm:hidden">New</span>
-                </button>
-              )}
+                  <option value="IT Department">IT Department</option>
+                  <option value="HR Department">HR Department</option>
+                </select>
+
+                {canEditAssignments && (
+                  <button
+                    onClick={() => navigate("/dashboard/add-assignment")}
+                    className="inline-flex items-center gap-2 rounded-2xl bg-[#B0BF00] px-4 py-2.5 text-sm font-semibold text-white shadow-[0_14px_30px_rgba(176,191,0,0.28)] transition-colors hover:bg-[#9aaa00] whitespace-nowrap"
+                  >
+                    <PackagePlus className="h-4 w-4" />
+                    <span className="hidden sm:inline">New Assignment</span>
+                    <span className="sm:hidden">New</span>
+                  </button>
+                )}
+              </div>
             </div>
           </div>
 
-          <div className="p-6">
+          <div className="p-3 sm:p-6">
             {selectedDepartment === "IT Department" ? (
-              <FloorMapIT assignments={itAssignments} />
+              <FloorMapIT assignments={filteredItAssignments} />
             ) : (
-              <FloorMapHR assignments={hrAssignments} />
+              <FloorMapHR assignments={filteredHrAssignments} />
             )}
           </div>
         </div>
