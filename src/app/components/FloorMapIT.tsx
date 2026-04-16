@@ -1,4 +1,5 @@
 import { useEffect, useState } from "react";
+import { Hash, User } from "lucide-react";
 import { useTheme } from "next-themes";
 import { Assignment } from "../context/AssignmentsContext";
 import { useInventory } from "../context/InventoryContext";
@@ -85,16 +86,20 @@ function SeatCell({ assignment, isDark, onClick }: SeatCellProps) {
       >
         <div className="flex flex-col items-center">
           <span
-            className="max-w-full overflow-hidden text-[8px] font-semibold leading-tight sm:text-[9px]"
+            className="flex max-w-full items-center gap-0.5 overflow-hidden text-[8px] font-semibold leading-tight sm:text-[9px]"
             style={{
               display: "-webkit-box",
               WebkitBoxOrient: "vertical",
               WebkitLineClamp: 2,
             }}
           >
+            <User className="h-2.5 w-2.5 flex-shrink-0" />
             {name}
           </span>
-          <span className="mt-0.5 text-[9px] font-bold leading-tight sm:text-[10px]">{seatLabel}</span>
+          <span className="mt-0.5 flex items-center gap-0.5 text-[9px] font-bold leading-tight sm:text-[10px]">
+            <Hash className="h-2.5 w-2.5 flex-shrink-0" />
+            {seatLabel}
+          </span>
         </div>
       </div>
 
